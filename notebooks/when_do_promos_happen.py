@@ -32,7 +32,7 @@ df["DayOfWeek"] = df["Date"].dt.dayofweek + 1  # 1=Mon … 7=Sun
 # %% Engineer Promo2_active
 # Map abbreviated month names to integers
 MONTH_MAP = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-             "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
+             "Jul": 7, "Aug": 8, "Sep": 9, "Sept": 9, "Oct": 10, "Nov": 11, "Dec": 12}
 
 def is_promo2_active(promo2, interval, month):
     """
