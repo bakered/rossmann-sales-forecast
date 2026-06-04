@@ -1,5 +1,5 @@
 {
-  "python.defaultInterpreterPath": "/usr/local/bin/python",
+  "python.defaultInterpreterPath": "/usr/local/bin/python3",
   "jupyter.kernelSpecFindPaths": ["/usr/local/"],
   "python.terminal.activateEnvironment": false
 }
