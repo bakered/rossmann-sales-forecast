@@ -1,0 +1,29 @@
+# Kaggle data — cannot be redistributed
+data/raw/
+
+# Processed data (large files)
+data/processed/
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model artefacts (large files)
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.bin
+
+# Working documents
+claude_instructions.html
+
+# OS
+.DS_Store
