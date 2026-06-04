@@ -1,5 +1,6 @@
 {
   "python.defaultInterpreterPath": "/usr/local/bin/python3",
   "jupyter.kernelSpecFindPaths": ["/usr/local/"],
-  "python.terminal.activateEnvironment": false
+  "python.terminal.activateEnvironment": false,
+  "jupyter.notebookFileRoot": "${workspaceFolder}"
 }
