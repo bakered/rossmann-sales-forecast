@@ -7,7 +7,7 @@ Requires Kaggle credentials at ~/.kaggle/access_token (new format) or
 ~/.kaggle/kaggle.json (legacy format). See data/README.md for details.
 """
 
-import os
+import subprocess
 import zipfile
 from pathlib import Path
 
@@ -22,16 +22,14 @@ def all_files_present():
 
 
 def download():
-    """Download and unzip competition files from Kaggle."""
-    from kaggle.api.kaggle_api_extended import KaggleApiExtended
-
+    """Download and unzip competition files from Kaggle using the CLI."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    api = KaggleApiExtended()
-    api.authenticate()
-
     print(f"Downloading {COMPETITION} data to {RAW_DIR}/...")
-    api.competition_download_files(COMPETITION, path=RAW_DIR, quiet=False)
+    subprocess.run(
+        ["kaggle", "competitions", "download", "-c", COMPETITION, "-p", str(RAW_DIR)],
+        check=True,
+    )
 
     zip_path = RAW_DIR / f"{COMPETITION}.zip"
     if zip_path.exists():
