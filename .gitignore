@@ -24,6 +24,7 @@ __pycache__/
 
 # Working documents
 claude_instructions.html
+project_setup_guide.html
 
 # OS
 .DS_Store
