@@ -2,10 +2,16 @@
 # # Rossmann EDA — Feature Exploration
 
 # %% Imports
+import os
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Ensure working directory is always the project root, regardless of where
+# VS Code launches the kernel from.
+os.chdir(Path(__file__).resolve().parent.parent)
 
 sns.set_theme(style="whitegrid")
 plt.rcParams["figure.figsize"] = (12, 4)

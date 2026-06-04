@@ -5,9 +5,13 @@
 # Key charts are saved to outputs/.
 
 # %% Imports and config
+import os
+from pathlib import Path
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
+os.chdir(Path(__file__).resolve().parent.parent)
 import matplotlib.ticker as mticker
 import seaborn as sns
 from pathlib import Path
