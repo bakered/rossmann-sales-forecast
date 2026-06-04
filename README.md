@@ -12,7 +12,7 @@ Two objectives:
 
 ## Data
 
-The raw data cannot be committed to this repository (Kaggle terms). See [`data/README.md`](data/README.md) for download instructions.
+The raw Rossmann data is not committed to this repository (Kaggle terms of use). See [`data/README.md`](data/README.md) for download instructions.
 
 ## Repository structure
 
