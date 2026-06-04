@@ -1,0 +1,10 @@
+services:
+  notebook:
+    build: .
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/workspace                        # project files live-synced into container
+      - ~/.kaggle:/root/.kaggle:ro          # host credentials mounted read-only
+    environment:
+      - PYTHONPATH=/workspace/src

@@ -1,0 +1,11 @@
+data/raw/
+data/processed/
+.env
+__pycache__/
+.ipynb_checkpoints/
+*.pkl
+*.joblib
+*.h5
+.git/
+.claude/
+claude_instructions.html
