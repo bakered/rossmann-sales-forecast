@@ -200,30 +200,42 @@ print("Lag features created.")
 print(df[lag_cols].notna().mean().round(3).to_string())
 
 # %% [markdown]
-# ## 7. Train / test split
+# ## 7. Splits
 #
-# Time-based split. Test period mirrors the Kaggle competition holdout.
-# Split is applied AFTER feature engineering to ensure lag features for
-# the test period correctly look back into training actuals.
+# Three splits, all time-based:
+#
+# | Split | Period | Purpose |
+# |---|---|---|
+# | train | 2013-01-01 → 2015-04-30 | Model fitting |
+# | val   | 2015-05-01 → 2015-07-31 | Evaluation during development |
+# | trainval | 2013-01-01 → 2015-07-31 | Full data for final model before Kaggle submission |
+#
+# Splits are applied AFTER feature engineering so lag features for validation
+# correctly look back into training actuals — no leakage.
 
 # %%
-TRAIN_END = "2015-06-30"
-TEST_START = "2015-07-01"
+TRAIN_END   = "2015-04-30"
+VAL_START   = "2015-05-01"
 
-train_df = df[df["Date"] <= TRAIN_END].copy()
-test_df  = df[df["Date"] >= TEST_START].copy()
+train_df    = df[df["Date"] <= TRAIN_END].copy()
+val_df      = df[df["Date"] >= VAL_START].copy()
+trainval_df = df.copy()
 
-print(f"Train: {train_df['Date'].min().date()} → {train_df['Date'].max().date()}  ({len(train_df):,} rows)")
-print(f"Test:  {test_df['Date'].min().date()}  → {test_df['Date'].max().date()}  ({len(test_df):,} rows)")
+print(f"Train:    {train_df['Date'].min().date()} → {train_df['Date'].max().date()}  ({len(train_df):,} rows)")
+print(f"Val:      {val_df['Date'].min().date()}  → {val_df['Date'].max().date()}   ({len(val_df):,} rows)")
+print(f"Trainval: {trainval_df['Date'].min().date()} → {trainval_df['Date'].max().date()}  ({len(trainval_df):,} rows)")
 
 # %% Save
-try:
-    train_df.to_parquet("data/processed/train_features.parquet", index=False)
-    test_df.to_parquet("data/processed/test_features.parquet",   index=False)
-    print("\nSaved to data/processed/ (parquet)")
-except ImportError:
-    # Fallback to CSV if pyarrow not installed; rebuild image to get parquet
-    train_df.to_csv("data/processed/train_features.csv", index=False)
-    test_df.to_csv("data/processed/test_features.csv",   index=False)
-    print("\nSaved to data/processed/ (CSV — install pyarrow for parquet)")
+def save(df_, name):
+    try:
+        df_.to_parquet(f"data/processed/{name}.parquet", index=False)
+        print(f"  {name}.parquet")
+    except ImportError:
+        df_.to_csv(f"data/processed/{name}.csv", index=False)
+        print(f"  {name}.csv  (install pyarrow for parquet)")
+
+print("\nSaved:")
+save(train_df,    "train_features")
+save(val_df,      "val_features")
+save(trainval_df, "trainval_features")
 print(f"Features: {[c for c in df.columns if c not in train.columns and c not in ['Year','Month']]}")
