@@ -224,3 +224,79 @@ fig.update_layout(barmode="group", template="plotly_white",
                   yaxis=dict(title="Fraction of open days", tickformat=".0%"),
                   height=400)
 fig.show()
+
+# %% [markdown]
+# ## Sales over time — 10 random stores, coloured by day type
+#
+# Each bar is one day. Colours:
+# - **Steelblue** — weekday with Promo=1
+# - **Coral** — weekday with Promo=0
+# - **Lightgrey** — weekend (Saturday/Sunday)
+#
+# Promos only occur on weekdays so weekends are always non-promo.
+# Use Plotly's zoom to inspect individual periods.
+
+# %% Pick 10 random stores (fixed seed for reproducibility)
+import numpy as np
+rng = np.random.default_rng(42)
+sample_stores = sorted(rng.choice(df["Store"].unique(), size=10, replace=False))
+print("Sampled stores:", sample_stores)
+
+# %% Build colour column
+# Reload full df including closed days so the time axis is continuous,
+# then filter to the sample stores.
+train_full = pd.read_csv("data/raw/train.csv", parse_dates=["Date"],
+                         dtype={"StateHoliday": str})
+
+sample_df = train_full[train_full["Store"].isin(sample_stores)].copy()
+sample_df["DayOfWeek"] = sample_df["Date"].dt.dayofweek + 1  # 1=Mon … 7=Sun
+sample_df["is_weekend"] = sample_df["DayOfWeek"] >= 6
+
+def day_colour(row):
+    """Assign display colour based on weekend/promo status."""
+    if row["is_weekend"]:
+        return "lightgrey"
+    return "steelblue" if row["Promo"] == 1 else "coral"
+
+sample_df["colour"] = sample_df.apply(day_colour, axis=1)
+
+# %% Plot — 5 rows x 2 cols, one subplot per store
+fig = make_subplots(rows=5, cols=2,
+                    subplot_titles=[f"Store {s}" for s in sample_stores],
+                    shared_xaxes=False,
+                    vertical_spacing=0.07,
+                    horizontal_spacing=0.08)
+
+for i, store_id in enumerate(sample_stores):
+    row = i // 2 + 1
+    col = i % 2 + 1
+    sdf = sample_df[sample_df["Store"] == store_id].sort_values("Date")
+
+    fig.add_trace(
+        go.Bar(
+            x=sdf["Date"],
+            y=sdf["Sales"],
+            marker_color=sdf["colour"],
+            showlegend=(i == 0),  # only add legend entries once
+            name="temp",          # overridden by legend traces below
+        ),
+        row=row, col=col
+    )
+    fig.update_yaxes(title_text="Sales (€)", row=row, col=col)
+
+# Add invisible legend traces for the three categories
+for label, colour in [("Weekend", "lightgrey"),
+                      ("Weekday — Promo", "steelblue"),
+                      ("Weekday — No promo", "coral")]:
+    fig.add_trace(go.Bar(x=[None], y=[None], name=label,
+                         marker_color=colour, showlegend=True))
+
+fig.update_layout(
+    title_text="Daily sales for 10 random stores — coloured by day type",
+    template="plotly_white",
+    height=1400,
+    width=1200,
+    legend=dict(orientation="h", x=0.25, y=1.01),
+    bargap=0.1,
+)
+fig.show()
