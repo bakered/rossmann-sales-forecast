@@ -68,20 +68,86 @@ store_promo  = df.groupby("Store")["Promo"].mean().reset_index(name="promo_rate"
 store_promo2 = df.groupby("Store")["Promo2_active"].mean().reset_index(name="promo2_rate")
 
 fig = make_subplots(rows=1, cols=2,
-                    subplot_titles=["Promo — rate per store",
-                                    "Promo2 active — rate per store"])
+                    subplot_titles=["Promo — fraction of open days per store",
+                                    "Promo2 active — fraction of open days per store"],
+                    horizontal_spacing=0.12)
 
-fig.add_trace(go.Histogram(x=store_promo["promo_rate"], nbinsx=40,
+fig.add_trace(go.Histogram(x=store_promo["promo_rate"], nbinsx=20,
                            marker_color="steelblue", name="Promo"), row=1, col=1)
-fig.add_trace(go.Histogram(x=store_promo2["promo2_rate"], nbinsx=40,
+fig.add_trace(go.Histogram(x=store_promo2["promo2_rate"], nbinsx=20,
                            marker_color="coral", name="Promo2"), row=1, col=2)
 
-fig.update_xaxes(title_text="Fraction of open days with promotion", row=1, col=1)
-fig.update_xaxes(title_text="Fraction of open days with promotion", row=1, col=2)
+fig.update_xaxes(title_text="Fraction of open days", row=1, col=1)
+fig.update_xaxes(title_text="Fraction of open days", row=1, col=2)
 fig.update_yaxes(title_text="Number of stores", row=1, col=1)
 fig.update_layout(title_text="Promotion frequency per store",
-                  showlegend=False, template="plotly_white", height=400)
+                  showlegend=False, template="plotly_white", height=450, width=1000)
 fig.show()
+
+# %% [markdown]
+# ## PromoStores — stores with Promo on more than 40% of open days
+
+# %% Define PromoStores and merge flag onto main df
+# Stores running Promo on >40% of open days are classified as PromoStores.
+# This threshold captures the natural split visible in the per-store histogram above.
+store_promo["PromoStore"] = (store_promo["promo_rate"] > 0.4).astype(int)
+
+df = df.merge(store_promo[["Store", "PromoStore"]], on="Store", how="left")
+
+n_promo    = store_promo["PromoStore"].sum()
+n_nonpromo = len(store_promo) - n_promo
+print(f"PromoStores (rate > 40%): {n_promo} stores")
+print(f"Non-PromoStores:          {n_nonpromo} stores")
+
+# %% Sales distribution — PromoStores vs non-PromoStores
+sales_promo    = df[df["PromoStore"] == 1]["Sales"]
+sales_nonpromo = df[df["PromoStore"] == 0]["Sales"]
+
+fig = make_subplots(rows=1, cols=2,
+                    subplot_titles=["Daily sales distribution",
+                                    "Mean sales by day of week"],
+                    horizontal_spacing=0.12)
+
+# Overlapping histograms
+fig.add_trace(go.Histogram(x=sales_promo, nbinsx=60, name="PromoStore",
+                           marker_color="steelblue", opacity=0.65,
+                           histnorm="probability density"), row=1, col=1)
+fig.add_trace(go.Histogram(x=sales_nonpromo, nbinsx=60, name="Non-PromoStore",
+                           marker_color="coral", opacity=0.65,
+                           histnorm="probability density"), row=1, col=1)
+
+# Mean sales by day of week
+dow_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+dow_promo    = df[df["PromoStore"] == 1].groupby("DayOfWeek")["Sales"].mean()
+dow_nonpromo = df[df["PromoStore"] == 0].groupby("DayOfWeek")["Sales"].mean()
+
+fig.add_trace(go.Bar(name="PromoStore", x=dow_labels, y=dow_promo.values,
+                     marker_color="steelblue", opacity=0.85, showlegend=False), row=1, col=2)
+fig.add_trace(go.Bar(name="Non-PromoStore", x=dow_labels, y=dow_nonpromo.values,
+                     marker_color="coral", opacity=0.85, showlegend=False), row=1, col=2)
+
+fig.update_xaxes(title_text="Daily sales (€)", row=1, col=1)
+fig.update_yaxes(title_text="Density", row=1, col=1)
+fig.update_yaxes(title_text="Mean daily sales (€)", row=1, col=2)
+fig.update_layout(barmode="group", template="plotly_white", height=450, width=1100,
+                  title_text="PromoStores vs Non-PromoStores — sales",
+                  legend=dict(x=0.38, y=1.12, orientation="h"))
+fig.show()
+
+# %% Summary stats — PromoStores vs non-PromoStores
+summary = df.groupby("PromoStore")["Sales"].agg(
+    mean="mean", median="median", std="std", p25=lambda x: x.quantile(0.25),
+    p75=lambda x: x.quantile(0.75)
+).round(0)
+summary.index = ["Non-PromoStore", "PromoStore"]
+print(summary)
+
+lift = summary.loc["PromoStore", "mean"] - summary.loc["Non-PromoStore", "mean"]
+lift_pct = lift / summary.loc["Non-PromoStore", "mean"] * 100
+print(f"\nMean sales lift (PromoStore vs Non-PromoStore): +€{lift:,.0f} (+{lift_pct:.1f}%)")
+# TO REVIEW: this comparison conflates the promo effect with store characteristics —
+# PromoStores may differ from non-PromoStores in size, type, location etc.
+# Phase 3 propensity analysis addresses this more carefully at the daily level.
 
 # %% [markdown]
 # ## Promo frequency by day of week
