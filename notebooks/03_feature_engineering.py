@@ -150,8 +150,24 @@ months_since = months_since.clip(lower=0)
 # NaN (no opening date recorded) → 999 (competitor long-established or absent)
 df["months_since_competitor_opened"] = months_since.fillna(999).astype(int)
 
+# New-competition flags — signal that lag features are unreliable.
+# When a competitor opens, the same-condition lag (14 days prior) still reflects
+# pre-competition sales. The model needs to know to discount the lag during
+# this adjustment window.
+#
+# comp_opened_last_6m: binary — competitor opened within the last 6 months.
+#   Triggers during the adjustment period; clean 0/1 split for tree models.
+# days_since_comp_opened: continuous 0–180 — lets the model learn that the
+#   impact fades as the lag window fills with post-competition observations.
+#   0 for all rows where competition is long-established or absent.
+days_since_comp = (df["Date"] - comp_open).dt.days.clip(lower=0)
+df["comp_opened_last_6m"]   = ((days_since_comp >= 0) & (days_since_comp <= 180)).astype(int)
+df["days_since_comp_opened"] = days_since_comp.where(days_since_comp <= 180, 0).fillna(0).astype(int)
+
 print("Competition features created.")
-print(f"No-competitor stores: {df['no_competitor'].sum():,} rows")
+print(f"No-competitor stores:           {df['no_competitor'].sum():,} rows")
+print(f"comp_opened_last_6m rows:       {df['comp_opened_last_6m'].sum():,}")
+print(f"days_since_comp_opened > 0:     {(df['days_since_comp_opened'] > 0).sum():,}")
 
 # %% [markdown]
 # ## 6. Lag and rolling features
